@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Huarhuar – Armenian ↔ Hungarian Translator</title>
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            padding: 20px;
+        }
+
+        .card {
+            background: rgba(255, 255, 255, 0.06);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 28px;
+            padding: 44px 36px 36px;
+            width: 100%;
+            max-width: 520px;
+            color: white;
+        }
+
+        /* ── Header ── */
+        .header {
+            text-align: center;
+            margin-bottom: 36px;
+        }
+
+        .flags {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 18px;
+            margin-bottom: 14px;
+        }
+
+        .flag-circle {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        .arrow-icon {
+            font-size: 1.3rem;
+            opacity: 0.5;
+            color: #90caff;
+        }
+
+        .title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: 0.3px;
+        }
+
+        .subtitle {
+            font-size: 0.82rem;
+            opacity: 0.5;
+            margin-top: 5px;
+            letter-spacing: 0.5px;
+        }
+
+        /* ── Mic area ── */
+        .mic-area {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 18px;
+            margin: 36px 0 28px;
+        }
+
+        .mic-btn {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            box-shadow: 0 8px 32px rgba(79, 172, 254, 0.4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.4rem;
+            transition: transform 0.15s ease, box-shadow 0.15s ease;
+            outline: none;
+            position: relative;
+        }
+
+        .mic-btn:hover:not(:disabled) {
+            transform: scale(1.06);
+            box-shadow: 0 10px 40px rgba(79, 172, 254, 0.55);
+        }
+
+        .mic-btn:active:not(:disabled) {
+            transform: scale(0.96);
+        }
+
+        .mic-btn.recording {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            box-shadow: 0 8px 32px rgba(245, 87, 108, 0.5);
+            animation: pulse-record 1.4s ease-in-out infinite;
+        }
+
+        .mic-btn.processing {
+            background: linear-gradient(135deg, #43e97b, #38f9d7);
+            box-shadow: 0 8px 32px rgba(67, 233, 123, 0.45);
+            cursor: not-allowed;
+            animation: glow-process 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse-record {
+
+            0%,
+            100% {
+                box-shadow: 0 8px 32px rgba(245, 87, 108, 0.5);
+                transform: scale(1);
+            }
+
+            50% {
+                box-shadow: 0 10px 56px rgba(245, 87, 108, 0.85);
+                transform: scale(1.07);
+            }
+        }
+
+        @keyframes glow-process {
+
+            0%,
+            100% {
+                box-shadow: 0 8px 32px rgba(67, 233, 123, 0.45);
+            }
+
+            50% {
+                box-shadow: 0 10px 52px rgba(56, 249, 215, 0.8);
+            }
+        }
+
+        .status-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            min-height: 22px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: transparent;
+            flex-shrink: 0;
+            transition: background 0.3s;
+        }
+
+        .status-dot.recording {
+            background: #f5576c;
+            animation: blink 1s step-start infinite;
+        }
+
+        .status-dot.processing {
+            background: #43e97b;
+            animation: blink 1.5s ease-in-out infinite;
+        }
+
+        @keyframes blink {
+            50% {
+                opacity: 0;
+            }
+        }
+
+        .status-text {
+            font-size: 0.88rem;
+            opacity: 0.6;
+            transition: all 0.3s;
+        }
+
+        .status-text.active {
+            opacity: 1;
+            color: #90caff;
+        }
+
+        .status-text.error {
+            opacity: 1;
+            color: #ff7b7b;
+        }
+
+        .status-text.success {
+            opacity: 1;
+            color: #7bffd4;
+        }
+
+        /* ── Hint pills ── */
+        .hint-row {
+            display: flex;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 28px;
+        }
+
+        .pill {
+            font-size: 0.73rem;
+            padding: 4px 10px;
+            border-radius: 20px;
+            background: rgba(255, 255, 255, 0.07);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            opacity: 0.65;
+            letter-spacing: 0.3px;
+        }
+
+        /* ── Divider ── */
+        .divider {
+            height: 1px;
+            background: rgba(255, 255, 255, 0.1);
+            margin-bottom: 20px;
+        }
+
+        /* ── Results ── */
+        .results {
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+            animation: fade-in 0.4s ease;
+        }
+
+        .results.visible {
+            display: flex;
+        }
+
+        @keyframes fade-in {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .result-card {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 16px;
+            padding: 16px 20px;
+        }
+
+        .result-card.translation {
+            background: rgba(79, 172, 254, 0.09);
+            border-color: rgba(144, 202, 255, 0.22);
+        }
+
+        .result-label {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1.1px;
+            opacity: 0.45;
+            margin-bottom: 8px;
+        }
+
+        .result-card.translation .result-label {
+            opacity: 0.6;
+            color: #90caff;
+        }
+
+        .result-text {
+            font-size: 1rem;
+            line-height: 1.55;
+        }
+
+        .result-card.translation .result-text {
+            font-size: 1.05rem;
+        }
+
+        /* ── Play again button ── */
+        .play-btn {
+            width: 100%;
+            margin-top: 4px;
+            padding: 10px;
+            border-radius: 12px;
+            border: 1px solid rgba(144, 202, 255, 0.25);
+            background: rgba(79, 172, 254, 0.1);
+            color: #90caff;
+            font-size: 0.83rem;
+            cursor: pointer;
+            letter-spacing: 0.3px;
+            transition: background 0.2s;
+            display: none;
+        }
+
+        .play-btn:hover {
+            background: rgba(79, 172, 254, 0.2);
+        }
+
+        .play-btn.visible {
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="card">
+
+        <!-- Header -->
+        <div class="header">
+            <div class="flags">
+                <div class="flag-circle">🇦🇲</div>
+                <span class="arrow-icon">⇄</span>
+                <div class="flag-circle">🇭🇺</div>
+            </div>
+            <div class="title">Huarhuar Translator</div>
+            <div class="subtitle">ARMENIAN · HUNGARIAN · AUTO-DETECT</div>
+        </div>
+
+        <!-- Mic -->
+        <div class="mic-area">
+            <button class="mic-btn" id="micBtn" title="Click to start recording">🎙</button>
+            <div class="status-row">
+                <div class="status-dot" id="statusDot"></div>
+                <span class="status-text" id="statusText">Click the mic to start speaking</span>
+            </div>
+        </div>
+
+        <!-- Language hints -->
+        <div class="hint-row">
+            <span class="pill">🇦🇲 Speak Armenian → Hungarian 🇭🇺</span>
+            <span class="pill">🇭🇺 Speak Hungarian → Armenian 🇦🇲</span>
+        </div>
+
+        <!-- Results -->
+        <div id="resultsWrap" class="results">
+            <div class="divider"></div>
+
+            <div class="result-card" id="origCard">
+                <div class="result-label">
+                    <span id="origFlag"></span>
+                    <span id="origLang"></span>
+                    — You said
+                </div>
+                <div class="result-text" id="origText"></div>
+            </div>
+
+            <div class="result-card translation" id="transCard">
+                <div class="result-label">
+                    <span id="transFlag"></span>
+                    <span id="transLang"></span>
+                    — Translation
+                </div>
+                <div class="result-text" id="transText"></div>
+            </div>
+
+            <button class="play-btn" id="playBtn" onclick="playAudio()">▶ Play translation again</button>
+        </div>
+
+    </div>
+
+    <audio id="player" style="display:none"></audio>
+
+    <script>
+        const FLAGS = { hy: '🇦🇲', hu: '🇭🇺' };
+
+        const micBtn = document.getElementById('micBtn');
+        const statusDot = document.getElementById('statusDot');
+        const statusText = document.getElementById('statusText');
+        const resultsWrap = document.getElementById('resultsWrap');
+        const playBtn = document.getElementById('playBtn');
+        const player = document.getElementById('player');
+
+        let recorder = null;
+        let chunks = [];
+        let isRecording = false;
+        let isProcessing = false;
+
+        micBtn.addEventListener('click', async () => {
+            if (isProcessing) return;
+            if (!isRecording) {
+                await startRecording();
+            } else {
+                stopRecording();
+            }
+        });
+
+        async function startRecording() {
+            let stream;
+            try {
+                stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            } catch {
+                setStatus('Microphone access denied. Please allow microphone in your browser.', 'error');
+                return;
+            }
+
+            chunks = [];
+            recorder = new MediaRecorder(stream);
+            recorder.ondataavailable = e => { if (e.data.size > 0) chunks.push(e.data); };
+            recorder.onstop = () => {
+                stream.getTracks().forEach(t => t.stop());
+                processAudio();
+            };
+            recorder.start();
+
+            isRecording = true;
+            micBtn.classList.add('recording');
+            micBtn.textContent = '⏹';
+            micBtn.title = 'Click to stop recording';
+            statusDot.className = 'status-dot recording';
+            setStatus('Recording… click ⏹ to stop', 'active');
+            resultsWrap.classList.remove('visible');
+            playBtn.classList.remove('visible');
+        }
+
+        function stopRecording() {
+            if (recorder && recorder.state !== 'inactive') {
+                recorder.stop();
+            }
+            isRecording = false;
+            isProcessing = true;
+            micBtn.classList.remove('recording');
+            micBtn.classList.add('processing');
+            micBtn.textContent = '⏳';
+            micBtn.disabled = true;
+            statusDot.className = 'status-dot processing';
+            setStatus('Transcribing and translating…', 'active');
+        }
+
+        async function processAudio() {
+            const mimeType = recorder.mimeType || 'audio/webm';
+            const blob = new Blob(chunks, { type: mimeType });
+            const ext = mimeType.includes('ogg') ? 'ogg' : mimeType.includes('mp4') ? 'mp4' : 'webm';
+
+            const form = new FormData();
+            form.append('audio', blob, `recording.${ext}`);
+
+            try {
+                const resp = await fetch('/translate', { method: 'POST', body: form });
+                const data = await resp.json();
+
+                if (data.error) {
+                    setStatus(data.error, 'error');
+                } else {
+                    showResult(data);
+                    playAudio();
+                    setStatus('Done! Click the mic to translate again.', 'success');
+                }
+            } catch {
+                setStatus('Could not reach the server. Is the app running?', 'error');
+            } finally {
+                isProcessing = false;
+                micBtn.classList.remove('processing');
+                micBtn.textContent = '🎙';
+                micBtn.disabled = false;
+                micBtn.title = 'Click to start recording';
+                statusDot.className = 'status-dot';
+            }
+        }
+
+        function showResult(data) {
+            document.getElementById('origFlag').textContent = FLAGS[data.originalLang] ?? '';
+            document.getElementById('origLang').textContent = data.originalLangName;
+            document.getElementById('origText').textContent = data.original;
+
+            document.getElementById('transFlag').textContent = FLAGS[data.targetLang] ?? '';
+            document.getElementById('transLang').textContent = data.targetLangName;
+            document.getElementById('transText').textContent = data.translation;
+
+            resultsWrap.classList.add('visible');
+            playBtn.classList.add('visible');
+        }
+
+        function playAudio() {
+            player.src = '/audio?t=' + Date.now();
+            player.play().catch(() => { });
+        }
+
+        function setStatus(msg, cls) {
+            statusText.textContent = msg;
+            statusText.className = 'status-text' + (cls ? ' ' + cls : '');
+        }
+    </script>
+</body>
+
+</html>
