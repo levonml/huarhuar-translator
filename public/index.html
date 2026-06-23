@@ -349,13 +349,13 @@
 
         <!-- Header -->
         <div class="title">Huarhuar Translator</div>
-        <div class="subtitle">ARMENIAN · HUNGARIAN</div>
+        <div class="subtitle">RUSSIAN · HUNGARIAN</div>
 
         <!-- Language Toggle Box -->
         <div class="lang-toggle-box">
             <button id="toggleLangBtn" class="lang-btn" title="Click to flip translate direction">
-                <span id="sourceFlag" class="lang-flag">🇦🇲</span>
-                <span id="sourceName" class="lang-name">Armenian</span>
+                <span id="sourceFlag" class="lang-flag">🇷🇺</span>
+                <span id="sourceName" class="lang-name">Russian</span>
                 <span class="arrow-icon">➔</span>
                 <span id="targetFlag" class="lang-flag">🇭🇺</span>
                 <span id="targetName" class="lang-name">Hungarian</span>
@@ -402,10 +402,10 @@
     <audio id="player" style="display:none"></audio>
 
     <script>
-        const FLAGS = { hy: '🇦🇲', hu: '🇭🇺' };
-        const NAMES = { hy: 'Armenian', hu: 'Hungarian' };
+        const FLAGS = { ru: '🇷🇺', hu: '🇭🇺' };
+        const NAMES = { ru: 'Russian', hu: 'Hungarian' };
 
-        let sourceLang = 'hy'; // state
+        let sourceLang = 'ru'; // state
 
         const toggleBtn = document.getElementById('toggleLangBtn');
         const micBtn = document.getElementById('micBtn');
@@ -423,8 +423,8 @@
         // Toggle language direction
         toggleBtn.addEventListener('click', () => {
             if (isRecording || isProcessing) return;
-            sourceLang = sourceLang === 'hy' ? 'hu' : 'hy';
-            const targetLang = sourceLang === 'hy' ? 'hu' : 'hy';
+            sourceLang = sourceLang === 'ru' ? 'hu' : 'ru';
+            const targetLang = sourceLang === 'ru' ? 'hu' : 'ru';
 
             document.getElementById('sourceFlag').textContent = FLAGS[sourceLang];
             document.getElementById('sourceName').textContent = NAMES[sourceLang];

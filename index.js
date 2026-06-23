@@ -13,8 +13,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CHAT_MODEL = 'gpt-4o-mini';
 const openai = new OpenAI({ apiKey: process.env.API_KEY });
 
-const LANG_NAMES = { hy: 'Armenian', hu: 'Hungarian' };
-const SUPPORTED = ['hy', 'hu'];
+const LANG_NAMES = { ru: 'Russian', hu: 'Hungarian' };
+const SUPPORTED = ['ru', 'hu'];
 
 const TMP_DIR = os.tmpdir();
 const TTS_PATH = path.join(TMP_DIR, 'huarhuar_output.mp3');
@@ -39,7 +39,7 @@ async function transcribe(filePath, originalname, mimetype, sourceLang) {
         file,
         model: 'whisper-1',
         language: sourceLang, // Force language detection
-        prompt: 'Բարև ձեզ: Ոնց եք: Szia, hogy vagy? (Armenian and Hungarian)',
+        prompt: 'Привет. Как дела? Szia, hogy vagy? (Russian and Hungarian)',
         response_format: 'verbose_json',
     });
     return { text: resp.text, language: resp.language };
@@ -83,8 +83,8 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.post('/translate', upload.single('audio'), async (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'No audio file received' });
 
-    const sourceLang = req.body.sourceLang || 'hy';
-    const targetLang = sourceLang === 'hy' ? 'hu' : 'hy';
+    const sourceLang = req.body.sourceLang || 'ru';
+    const targetLang = sourceLang === 'ru' ? 'hu' : 'ru';
 
     const { path: filePath, originalname, mimetype } = req.file;
     try {
