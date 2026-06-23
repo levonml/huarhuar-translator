@@ -1,0 +1,16 @@
+{
+  "name": "huarhuar",
+  "version": "1.0.0",
+  "description": "Armenian-Hungarian voice translator",
+  "license": "ISC",
+  "author": "",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.0.0",
+    "openai": "^4.0.0"
+  }
+}
