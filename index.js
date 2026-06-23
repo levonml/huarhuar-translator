@@ -32,12 +32,14 @@ const upload = multer({
 });
 
 // ── Transcription ─────────────────────────────────────────────────────────────
-async function transcribe(filePath, originalname, mimetype) {
+async function transcribe(filePath, originalname, mimetype, sourceLang) {
     const stream = fs.createReadStream(filePath);
     const file = await toFile(stream, originalname, { type: mimetype });
     const resp = await openai.audio.transcriptions.create({
         file,
         model: 'whisper-1',
+        language: sourceLang, // Force language detection
+        prompt: 'Բարև ձեզ: Ոնց եք: Szia, hogy vagy? (Armenian and Hungarian)',
         response_format: 'verbose_json',
     });
     return { text: resp.text, language: resp.language };
@@ -81,28 +83,24 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.post('/translate', upload.single('audio'), async (req, res) => {
     if (!req.file) return res.status(400).json({ error: 'No audio file received' });
 
+    const sourceLang = req.body.sourceLang || 'hy';
+    const targetLang = sourceLang === 'hy' ? 'hu' : 'hy';
+
     const { path: filePath, originalname, mimetype } = req.file;
     try {
-        const { text, language } = await transcribe(filePath, originalname, mimetype);
+        const { text } = await transcribe(filePath, originalname, mimetype, sourceLang);
 
-        if (!SUPPORTED.includes(language)) {
-            return res.json({
-                error: `Detected language "${language}" is not supported. Please speak Armenian or Hungarian.`,
-                detectedLang: language,
-            });
-        }
+        const translation = await translate(text, sourceLang, targetLang);
 
-        const target = language === 'hy' ? 'hu' : 'hy';
-        const translation = await translate(text, language, target);
         await synthesize(translation);
 
         res.json({
             original: text,
-            originalLang: language,
-            originalLangName: LANG_NAMES[language],
+            originalLang: sourceLang,
+            originalLangName: LANG_NAMES[sourceLang],
             translation,
-            targetLang: target,
-            targetLangName: LANG_NAMES[target],
+            targetLang: targetLang,
+            targetLangName: LANG_NAMES[targetLang],
         });
     } catch (err) {
         console.error('[/translate]', err.message);

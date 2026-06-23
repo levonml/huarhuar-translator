@@ -34,40 +34,10 @@
             width: 100%;
             max-width: 520px;
             color: white;
+            text-align: center;
         }
 
         /* ── Header ── */
-        .header {
-            text-align: center;
-            margin-bottom: 36px;
-        }
-
-        .flags {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 18px;
-            margin-bottom: 14px;
-        }
-
-        .flag-circle {
-            width: 60px;
-            height: 60px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 2rem;
-            background: rgba(255, 255, 255, 0.08);
-            border: 1px solid rgba(255, 255, 255, 0.15);
-        }
-
-        .arrow-icon {
-            font-size: 1.3rem;
-            opacity: 0.5;
-            color: #90caff;
-        }
-
         .title {
             font-size: 1.5rem;
             font-weight: 700;
@@ -79,6 +49,59 @@
             opacity: 0.5;
             margin-top: 5px;
             letter-spacing: 0.5px;
+            margin-bottom: 30px;
+        }
+
+        /* ── Language Toggle ── */
+        .lang-toggle-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .lang-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 40px;
+            padding: 10px 24px;
+            color: white;
+            font-family: inherit;
+            cursor: pointer;
+            transition: all 0.2s;
+            outline: none;
+            font-size: 1.1rem;
+        }
+
+        .lang-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+            transform: scale(1.02);
+        }
+
+        .lang-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .lang-flag {
+            font-size: 1.6rem;
+        }
+
+        .lang-name {
+            font-weight: 600;
+            width: 85px;
+        }
+
+        .arrow-icon {
+            font-size: 1.1rem;
+            opacity: 0.5;
+            color: #90caff;
         }
 
         /* ── Mic area ── */
@@ -325,14 +348,19 @@
     <div class="card">
 
         <!-- Header -->
-        <div class="header">
-            <div class="flags">
-                <div class="flag-circle">🇦🇲</div>
-                <span class="arrow-icon">⇄</span>
-                <div class="flag-circle">🇭🇺</div>
-            </div>
-            <div class="title">Huarhuar Translator</div>
-            <div class="subtitle">ARMENIAN · HUNGARIAN · AUTO-DETECT</div>
+        <div class="title">Huarhuar Translator</div>
+        <div class="subtitle">ARMENIAN · HUNGARIAN</div>
+
+        <!-- Language Toggle Box -->
+        <div class="lang-toggle-box">
+            <button id="toggleLangBtn" class="lang-btn" title="Click to flip translate direction">
+                <span id="sourceFlag" class="lang-flag">🇦🇲</span>
+                <span id="sourceName" class="lang-name">Armenian</span>
+                <span class="arrow-icon">➔</span>
+                <span id="targetFlag" class="lang-flag">🇭🇺</span>
+                <span id="targetName" class="lang-name">Hungarian</span>
+            </button>
+            <div class="subtitle" style="margin-top: 8px; margin-bottom: 0;">Click above to switch languages</div>
         </div>
 
         <!-- Mic -->
@@ -342,12 +370,6 @@
                 <div class="status-dot" id="statusDot"></div>
                 <span class="status-text" id="statusText">Click the mic to start speaking</span>
             </div>
-        </div>
-
-        <!-- Language hints -->
-        <div class="hint-row">
-            <span class="pill">🇦🇲 Speak Armenian → Hungarian 🇭🇺</span>
-            <span class="pill">🇭🇺 Speak Hungarian → Armenian 🇦🇲</span>
         </div>
 
         <!-- Results -->
@@ -381,7 +403,11 @@
 
     <script>
         const FLAGS = { hy: '🇦🇲', hu: '🇭🇺' };
+        const NAMES = { hy: 'Armenian', hu: 'Hungarian' };
 
+        let sourceLang = 'hy'; // state
+
+        const toggleBtn = document.getElementById('toggleLangBtn');
         const micBtn = document.getElementById('micBtn');
         const statusDot = document.getElementById('statusDot');
         const statusText = document.getElementById('statusText');
@@ -393,6 +419,19 @@
         let chunks = [];
         let isRecording = false;
         let isProcessing = false;
+
+        // Toggle language direction
+        toggleBtn.addEventListener('click', () => {
+            if (isRecording || isProcessing) return;
+            sourceLang = sourceLang === 'hy' ? 'hu' : 'hy';
+            const targetLang = sourceLang === 'hy' ? 'hu' : 'hy';
+
+            document.getElementById('sourceFlag').textContent = FLAGS[sourceLang];
+            document.getElementById('sourceName').textContent = NAMES[sourceLang];
+
+            document.getElementById('targetFlag').textContent = FLAGS[targetLang];
+            document.getElementById('targetName').textContent = NAMES[targetLang];
+        });
 
         micBtn.addEventListener('click', async () => {
             if (isProcessing) return;
@@ -441,6 +480,7 @@
             micBtn.classList.add('processing');
             micBtn.textContent = '⏳';
             micBtn.disabled = true;
+            toggleBtn.disabled = true;
             statusDot.className = 'status-dot processing';
             setStatus('Transcribing and translating…', 'active');
         }
@@ -452,6 +492,7 @@
 
             const form = new FormData();
             form.append('audio', blob, `recording.${ext}`);
+            form.append('sourceLang', sourceLang);
 
             try {
                 const resp = await fetch('/translate', { method: 'POST', body: form });
@@ -471,6 +512,7 @@
                 micBtn.classList.remove('processing');
                 micBtn.textContent = '🎙';
                 micBtn.disabled = false;
+                toggleBtn.disabled = false;
                 micBtn.title = 'Click to start recording';
                 statusDot.className = 'status-dot';
             }
